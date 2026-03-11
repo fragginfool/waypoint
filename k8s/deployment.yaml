@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: waypoint
+  labels:
+    app: waypoint
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: waypoint
+  template:
+    metadata:
+      labels:
+        app: waypoint
+    spec:
+      containers:
+        - name: waypoint
+          image: waypoint:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: waypoint-data
+              mountPath: /app/prisma
+      volumes:
+        - name: waypoint-data
+          persistentVolumeClaim:
+            claimName: waypoint-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: waypoint-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
