@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+
+  posts     Post[]
+  tasks     Task[]
+  goals     Goal[]
+  events    Event[]
+  habits    Habit[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  author    String
+  content   String
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id        String   @id @default(cuid())
+  title     String
+  status    String   // "todo", "in_progress", "done"
+  priority  String   // "High", "Medium", "Low"
+  dueDate   DateTime?
+  order     Int      @default(0) // For drag and drop ordering
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Goal {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  category    String   // "Work", "Health", "Finance", "Growth"
+  timeframe   String   // "Weekly", "Monthly", "Yearly"
+  progress    Int      @default(0)
+  targetDate  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  type        String   // "work", "personal", "health"
+  startDate   DateTime
+  endDate     DateTime
+  location    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Habit {
+  id        String     @id @default(cuid())
+  name      String
+  logs      HabitLog[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model HabitLog {
+  id        String   @id @default(cuid())
+  habitId   String
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  date      String   // Stored as YYYY-MM-DD
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([habitId, date]) // A habit can only have one log per day
+}
