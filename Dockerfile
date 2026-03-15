@@ -51,11 +51,8 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Note: Using SQLite requires a volume for persistence.
-# For simplicity, we create a directory for it, but relying on this local path
-# in production may result in data loss unless mounted correctly in Kubernetes.
-RUN mkdir -p /app/prisma
-RUN chown nextjs:nodejs /app/prisma
+# SQLite database needs a writable directory for persistence
+RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
 
 # Copy the generated Prisma client and the prisma CLI package
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma

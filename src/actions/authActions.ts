@@ -1,7 +1,7 @@
 "use server"
 
 import prisma from "@/lib/prisma"
-import bcrypt from "bcrypt"
+import bcrypt from "bcryptjs"
 import { cookies } from "next/headers"
 import { signToken } from "@/lib/auth"
 
@@ -36,7 +36,7 @@ export async function register(formData: FormData) {
     const cookieStore = await cookies()
     cookieStore.set("auth_token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.COOKIE_SECURE === "true",
       maxAge: 60 * 60 * 24 * 7, // 1 week
       path: "/",
     })
@@ -73,7 +73,7 @@ export async function login(formData: FormData) {
     const cookieStore = await cookies()
     cookieStore.set("auth_token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.COOKIE_SECURE === "true",
       maxAge: 60 * 60 * 24 * 7, // 1 week
       path: "/",
     })

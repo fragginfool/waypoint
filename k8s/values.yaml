@@ -1,0 +1,71 @@
+# ─── Image ────────────────────────────────────────────────────────────────────
+image:
+  repository: gitea.home/josh/waypoint
+  tag: latest
+  pullPolicy: Always
+
+# If your Gitea registry requires authentication, create a pull-secret first:
+#   kubectl create secret docker-registry gitea-registry \
+#     --docker-server=gitea.home \
+#     --docker-username=<user> \
+#     --docker-password=<token> \
+#     --namespace=waypoint
+# Then set:
+imagePullSecrets: []
+# imagePullSecrets:
+#   - name: gitea-registry
+
+# ─── Application ──────────────────────────────────────────────────────────────
+replicaCount: 1
+
+# Secrets are stored in a Kubernetes Secret and injected as env vars.
+# Change jwtSecret before deploying!
+secret:
+  jwtSecret: "CHANGE_ME_BEFORE_DEPLOY"
+
+# SQLite database path inside the container (must match the volumeMount below).
+env:
+  databaseUrl: "file:/app/data/dev.db"
+  nodeEnv: "production"
+  cookieSecure: "false"   # set to "true" only if serving over HTTPS
+
+podSecurityContext:
+  fsGroup: 1001
+
+containerSecurityContext:
+  runAsUser: 1001
+  runAsGroup: 1001
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+
+# ─── Resources ────────────────────────────────────────────────────────────────
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+# ─── Persistence (SQLite) ─────────────────────────────────────────────────────
+persistence:
+  enabled: true
+  storageClass: "nfs-client"
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  mountPath: /app/data
+
+# ─── Service ──────────────────────────────────────────────────────────────────
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+# ─── Ingress (Traefik — k3s default) ──────────────────────────────────────────
+ingress:
+  enabled: true
+  ingressClass: traefik
+  host: waypoint.home     # change to your actual hostname / local DNS entry
+  tls: false
+  # tls: true
+  # tlsSecret: waypoint-tls   # cert-manager or manually-created TLS secret name
