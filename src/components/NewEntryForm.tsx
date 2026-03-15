@@ -15,24 +15,29 @@ export default function NewEntryForm() {
     if (!content.trim()) return;
 
     startTransition(async () => {
-      let finalImageUrl: string | undefined = undefined;
+      try {
+        let finalImageUrl: string | undefined = undefined;
 
-      if (file) {
-        const formData = new FormData();
-        formData.append('file', file);
-        const { uploadImage } = await import('@/actions/uploadActions');
-        const uploadedUrl = await uploadImage(formData);
-        if (uploadedUrl) {
-          finalImageUrl = uploadedUrl;
+        if (file) {
+          const formData = new FormData();
+          formData.append('file', file);
+          const { uploadImage } = await import('@/actions/uploadActions');
+          const uploadedUrl = await uploadImage(formData);
+          if (uploadedUrl) {
+            finalImageUrl = uploadedUrl;
+          }
         }
-      }
 
-      // Hardcode author to User for now
-      await addPost(content.trim(), finalImageUrl);
-      
-      setContent('');
-      setFile(null);
-      setIsOpen(false);
+        // Hardcode author to User for now
+        await addPost(content.trim(), finalImageUrl);
+
+        setContent('');
+        setFile(null);
+        setIsOpen(false);
+      } catch (error) {
+        console.error("Failed to post entry:", error);
+        alert("Failed to post entry. Please try again.");
+      }
     });
   };
 
@@ -44,10 +49,15 @@ export default function NewEntryForm() {
           <button 
             onClick={() => {
               startTransition(async () => {
-                const { captureDaySummary } = await import('@/actions/postActions');
-                const res = await captureDaySummary();
-                if (res && res.success === false) {
-                  alert(res.message);
+                try {
+                  const { captureDaySummary } = await import('@/actions/postActions');
+                  const res = await captureDaySummary();
+                  if (res && res.success === false) {
+                    alert(res.message);
+                  }
+                } catch (error) {
+                  console.error("Failed to capture day:", error);
+                  alert("Failed to capture day. Please try again.");
                 }
               });
             }}
