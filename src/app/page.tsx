@@ -1,5 +1,4 @@
 import PostCard, { Post } from '@/components/PostCard';
-import ActivityHeatmap from '@/components/ActivityHeatmap';
 import NewEntryForm from '@/components/NewEntryForm';
 import { getPosts } from '@/actions/postActions';
 
@@ -19,9 +18,6 @@ export default async function Home() {
 
   return (
     <div className="max-w-3xl mx-auto py-12 px-4 sm:px-6 lg:px-8 space-y-12">
-      {/* Activity Heatmap */}
-      <ActivityHeatmap />
-
       {/* Journal Section */}
       <div>
         <NewEntryForm />

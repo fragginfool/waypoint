@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { getAuthUserId } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import JSZip from 'jszip';
 import { format } from 'date-fns';
@@ -8,13 +7,7 @@ import path from 'path';
 
 export async function GET() {
   try {
-    const userId = await getAuthUserId();
-    if (!userId) {
-      return new NextResponse('Unauthorized', { status: 401 });
-    }
-
     const posts = await prisma.post.findMany({
-      where: { userId },
       orderBy: { createdAt: 'asc' }
     });
 

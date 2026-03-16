@@ -1,6 +1,6 @@
 "use server"
 
-import { writeFile } from 'fs/promises'
+import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -14,8 +14,12 @@ export async function uploadImage(formData: FormData): Promise<string | null> {
   const extension = path.extname(file.name) || '.jpg'
   const filename = `${uuidv4()}${extension}`
   
+  // Ensure the upload directory exists
+  const uploadDir = path.join(process.cwd(), 'public', 'uploads')
+  await mkdir(uploadDir, { recursive: true })
+  
   // Save the file to the public/uploads directory securely
-  const uploadPath = path.join(process.cwd(), 'public', 'uploads', filename)
+  const uploadPath = path.join(uploadDir, filename)
   await writeFile(uploadPath, buffer)
   
   // Return the public URL path

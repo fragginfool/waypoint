@@ -4,6 +4,7 @@ import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import CalendarWidget from "@/components/CalendarWidget";
 import HabitTracker from "@/components/HabitTracker";
+import ActivityHeatmap from "@/components/ActivityHeatmap";
 import BottomNav from "@/components/BottomNav";
 
 const geistSans = Geist({
@@ -42,8 +43,9 @@ export default function RootLayout({
           </div>
 
           {/* Right Sidebar */}
-          <aside className="w-80 h-full border-l border-gray-200 bg-gray-50 p-6 hidden lg:block overflow-y-auto shrink-0 sticky top-0">
+          <aside className="w-80 h-full border-l border-gray-200 bg-gray-50 p-6 hidden lg:block overflow-y-auto shrink-0 sticky top-0 space-y-8">
             <CalendarWidget />
+            <ActivityHeatmap />
             <HabitTracker />
           </aside>
         </main>

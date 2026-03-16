@@ -2,48 +2,34 @@
 
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
-import { getAuthUserId } from "@/lib/auth"
 
 export async function getHabits() {
-  const userId = await getAuthUserId()
-  if (!userId) return []
-
   const habits = await prisma.habit.findMany({
-    where: { userId },
     include: { logs: true }
   })
   return habits
 }
 
 export async function addHabit(name: string) {
-  const userId = await getAuthUserId()
-  if (!userId) throw new Error("Unauthorized")
-
   await prisma.habit.create({
-    data: { name, userId }
+    data: { name }
   })
   revalidatePath("/")
 }
 
 export async function deleteHabit(id: string) {
-  const userId = await getAuthUserId()
-  if (!userId) throw new Error("Unauthorized")
-
-  await prisma.habit.deleteMany({
-    where: { id, userId }
+  await prisma.habit.delete({
+    where: { id }
   })
   revalidatePath("/")
 }
 
 export async function toggleHabit(id: string, completed: boolean, date: string) {
-  const userId = await getAuthUserId()
-  if (!userId) throw new Error("Unauthorized")
-
-  // Verify the habit belongs to the user before editing logs
-  const habit = await prisma.habit.findFirst({
-    where: { id, userId }
+  // Verify the habit exists
+  const habit = await prisma.habit.findUnique({
+    where: { id }
   })
-  if (!habit) throw new Error("Habit not found or unauthorized")
+  if (!habit) throw new Error("Habit not found")
 
   if (completed) {
     await prisma.habitLog.upsert({
@@ -61,7 +47,7 @@ export async function toggleHabit(id: string, completed: boolean, date: string) 
       }
     })
   } else {
-    // If not completed, we can just delete the log or set it to false
+    // If not completed, we can just delete the log
     await prisma.habitLog.deleteMany({
       where: {
         habitId: id,

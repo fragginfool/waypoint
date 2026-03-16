@@ -2,7 +2,6 @@
 
 import prisma from "@/lib/prisma"
 import { subDays, format } from 'date-fns'
-import { getAuthUserId } from "@/lib/auth"
 
 type Activity = {
   date: string;
@@ -13,9 +12,6 @@ type Activity = {
 export async function getActivityData(): Promise<Activity[]> {
   const data: Activity[] = [];
   const today = new Date();
-  const userId = await getAuthUserId();
-
-  if (!userId) return []; // Return empty if not authenticated
   
   // Create an array of the last 365 dates as strings 'YYYY-MM-DD'
   const dates = Array.from({ length: 365 }).map((_, i) => format(subDays(today, 364 - i), 'yyyy-MM-dd'));
@@ -25,12 +21,11 @@ export async function getActivityData(): Promise<Activity[]> {
 
   const [posts, tasks, goals, habitLogs] = await Promise.all([
     prisma.post.findMany({
-      where: { userId, createdAt: { gte: oneYearAgo } },
+      where: { createdAt: { gte: oneYearAgo } },
       select: { createdAt: true }
     }),
     prisma.task.findMany({
       where: {
-        userId,
         OR: [
           { createdAt: { gte: oneYearAgo } },
           { updatedAt: { gte: oneYearAgo }, status: 'done' }
@@ -39,14 +34,13 @@ export async function getActivityData(): Promise<Activity[]> {
       select: { createdAt: true, updatedAt: true, status: true }
     }),
     prisma.goal.findMany({
-      where: { userId, createdAt: { gte: oneYearAgo } },
+      where: { createdAt: { gte: oneYearAgo } },
       select: { createdAt: true }
     }),
     prisma.habitLog.findMany({
       where: { 
         date: { in: dates }, 
         completed: true,
-        habit: { userId } 
       },
       select: { date: true, completed: true }
     })

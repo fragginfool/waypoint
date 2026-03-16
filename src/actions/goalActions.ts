@@ -2,14 +2,9 @@
 
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
-import { getAuthUserId } from "@/lib/auth"
 
 export async function getGoals() {
-  const userId = await getAuthUserId()
-  if (!userId) return []
-
   const goals = await prisma.goal.findMany({
-    where: { userId },
     orderBy: { targetDate: "asc" }
   })
   return goals
@@ -23,9 +18,6 @@ export async function addGoal(
   description?: string,
   targetDateStr?: string
 ) {
-  const userId = await getAuthUserId()
-  if (!userId) throw new Error("Unauthorized")
-
   await prisma.goal.create({
     data: {
       title,
@@ -34,29 +26,30 @@ export async function addGoal(
       progress,
       description,
       targetDate: targetDateStr ? new Date(targetDateStr) : null,
-      userId
     }
   })
   revalidatePath("/")
 }
 
 export async function updateGoalProgress(id: string, newProgress: number) {
-  const userId = await getAuthUserId()
-  if (!userId) throw new Error("Unauthorized")
-
-  await prisma.goal.updateMany({
-    where: { id, userId },
+  await prisma.goal.update({
+    where: { id },
     data: { progress: newProgress }
   })
   revalidatePath("/")
 }
 
-export async function deleteGoal(id: string) {
-  const userId = await getAuthUserId()
-  if (!userId) throw new Error("Unauthorized")
+export async function updateGoalDescription(id: string, description: string) {
+  await prisma.goal.update({
+    where: { id },
+    data: { description }
+  })
+  revalidatePath("/")
+}
 
-  await prisma.goal.deleteMany({
-    where: { id, userId }
+export async function deleteGoal(id: string) {
+  await prisma.goal.delete({
+    where: { id }
   })
   revalidatePath("/")
 }

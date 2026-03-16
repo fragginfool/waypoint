@@ -1,44 +1,29 @@
 import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
 async function main() {
   console.log('Seeding the database...')
-  const hashedPassword = await bcrypt.hash('password123', 10)
   
-  const testUser = await prisma.user.upsert({
-    where: { email: 'test@example.com' },
-    update: {},
-    create: {
-      email: 'test@example.com',
-      password: hashedPassword,
-      name: 'Test User'
-    }
-  })
-
   // 1. Posts (Journal)
   await prisma.post.createMany({
     data: [
       {
-        author: 'Test User',
+        author: 'Me',
         content: 'Feeling great after finishing the weekly goals review. Momentum is building.',
         imageUrl: 'https://images.unsplash.com/photo-1517816743773-6e0fd518b4a6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
         createdAt: new Date(),
-        userId: testUser.id,
       },
       {
-        author: 'Test User',
+        author: 'Me',
         content: 'Just journaled about the new project phase. Clarity is key.',
         createdAt: new Date(Date.now() - 3600000 * 2),
-        userId: testUser.id,
       },
       {
-        author: 'Test User',
+        author: 'Me',
         content: 'Morning hike to clear the mind before a busy week.',
         imageUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
         createdAt: new Date(Date.now() - 3600000 * 24),
-        userId: testUser.id,
       }
     ]
   })
@@ -52,7 +37,6 @@ async function main() {
         priority: 'High',
         dueDate: new Date(new Date().setDate(new Date().getDate() + 2)),
         order: 0,
-        userId: testUser.id,
       },
       {
         title: 'Draft Project Proposal',
@@ -60,7 +44,6 @@ async function main() {
         priority: 'Medium',
         dueDate: new Date(new Date().setDate(new Date().getDate() + 5)),
         order: 1,
-        userId: testUser.id,
       },
       {
         title: 'Schedule dentist appointment',
@@ -68,7 +51,6 @@ async function main() {
         priority: 'Low',
         dueDate: new Date(new Date().setDate(new Date().getDate() + 10)),
         order: 2,
-        userId: testUser.id,
       },
       {
         title: 'Weekly Sync with Design Team',
@@ -76,7 +58,6 @@ async function main() {
         priority: 'Medium',
         dueDate: new Date(),
         order: 3,
-        userId: testUser.id,
       }
     ]
   })
@@ -85,11 +66,11 @@ async function main() {
   const today = new Date().toISOString().split('T')[0];
 
   const habit1 = await prisma.habit.create({
-    data: { name: 'Read 20 pages', userId: testUser.id }
+    data: { name: 'Read 20 pages' }
   });
 
   const habit2 = await prisma.habit.create({
-    data: { name: 'Drink 2L Water', userId: testUser.id }
+    data: { name: 'Drink 2L Water' }
   });
 
   await prisma.habitLog.create({
@@ -106,7 +87,6 @@ async function main() {
         timeframe: 'Weekly',
         progress: 100,
         targetDate: new Date('2024-03-10'),
-        userId: testUser.id,
       },
       {
         title: 'Launch Waypoint MVP',
@@ -115,7 +95,6 @@ async function main() {
         timeframe: 'Monthly',
         progress: 75,
         targetDate: new Date('2024-03-31'),
-        userId: testUser.id,
       },
       {
         title: 'Read 24 Books',
@@ -124,7 +103,6 @@ async function main() {
         timeframe: 'Yearly',
         progress: 30,
         targetDate: new Date('2024-12-31'),
-        userId: testUser.id,
       },
       {
         title: 'Run a Half Marathon',
@@ -133,7 +111,6 @@ async function main() {
         timeframe: 'Yearly',
         progress: 60,
         targetDate: new Date('2024-10-15'),
-        userId: testUser.id,
       },
       {
         title: 'Save Emergency Fund',
@@ -142,7 +119,6 @@ async function main() {
         timeframe: 'Yearly',
         progress: 85,
         targetDate: new Date('2024-11-30'),
-        userId: testUser.id,
       }
     ]
   })

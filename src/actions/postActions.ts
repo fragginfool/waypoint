@@ -2,45 +2,30 @@
 
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
-import { getAuthUserId } from "@/lib/auth"
 
 export async function getPosts() {
-  const userId = await getAuthUserId()
-  if (!userId) return []
-
   const posts = await prisma.post.findMany({
-    where: { userId },
     orderBy: { createdAt: "desc" },
-    include: { user: { select: { name: true } } }
   })
   
-  // Map back mapping the user's fetched name back to author for the component
   return posts.map((post: any) => ({
     ...post,
-    author: post.user.name,
+    author: post.author || "Me",
   }))
 }
 
-// We no longer need the author string param, we will just use the authenticated user
 export async function addPost(content: string, imageUrl?: string) {
-  const userId = await getAuthUserId()
-  if (!userId) throw new Error("Unauthorized")
-
   await prisma.post.create({
     data: {
-      author: "", // Keeping this field as it exists but will be fetched via relation. Or maybe I should drop it in schema later. Leaving empty for now.
+      author: "Me",
       content,
       imageUrl: imageUrl || null,
-      userId
     }
   })
   revalidatePath("/")
 }
 
 export async function captureDaySummary() {
-  const userId = await getAuthUserId()
-  if (!userId) throw new Error("Unauthorized")
-
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const tomorrow = new Date(today)
@@ -49,7 +34,6 @@ export async function captureDaySummary() {
   // Find all tasks marked as "done" that were updated today
   const completedTasks = await prisma.task.findMany({
     where: {
-      userId,
       status: "done",
       updatedAt: {
         gte: today,
@@ -64,9 +48,6 @@ export async function captureDaySummary() {
     where: {
       date: dateStr,
       completed: true,
-      habit: {
-        userId
-      }
     },
     include: {
       habit: true
@@ -88,12 +69,26 @@ export async function captureDaySummary() {
 
   await prisma.post.create({
     data: {
-      author: "", 
+      author: "Me", 
       content,
-      userId
     }
   })
 
   revalidatePath("/")
   return { success: true }
+}
+
+export async function updatePost(id: string, content: string) {
+  await prisma.post.update({
+    where: { id },
+    data: { content }
+  })
+  revalidatePath("/")
+}
+
+export async function deletePost(id: string) {
+  await prisma.post.delete({
+    where: { id }
+  })
+  revalidatePath("/")
 }

@@ -27,7 +27,7 @@ export default function NewEntryForm() {
         }
       }
 
-      // Hardcode author to User for now
+      // Hardcode author to "Me" for now
       await addPost(content.trim(), finalImageUrl);
       
       setContent('');

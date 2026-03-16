@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
-import { Target, Clock, Activity, Plus } from 'lucide-react';
-import { getGoals } from '@/actions/goalActions';
+import { Target, Clock, Activity, Plus, CheckCircle, Trash2, Edit3, X, Save } from 'lucide-react';
+import { getGoals, updateGoalProgress, deleteGoal, updateGoalDescription } from '@/actions/goalActions';
 import { format } from 'date-fns';
 
 interface Goal {
@@ -27,6 +27,10 @@ export default function GoalsList() {
   const [newDescription, setNewDescription] = useState('');
   const [newCategory, setNewCategory] = useState('Growth');
   const [newTargetDate, setNewTargetDate] = useState('');
+
+  // Editing State
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDescription, setEditDescription] = useState('');
 
   const fetchGoals = async () => {
     const data = await getGoals();
@@ -68,6 +72,30 @@ export default function GoalsList() {
       setNewCategory('Growth');
       setNewTargetDate('');
       setIsAdding(false);
+      await fetchGoals();
+    });
+  };
+
+  const handleComplete = async (id: string) => {
+    startTransition(async () => {
+      await updateGoalProgress(id, 100);
+      await fetchGoals();
+    });
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this goal?')) return;
+    startTransition(async () => {
+      await deleteGoal(id);
+      await fetchGoals();
+    });
+  };
+
+
+  const handleSaveDescription = async (id: string) => {
+    startTransition(async () => {
+      await updateGoalDescription(id, editDescription);
+      setEditingId(null);
       await fetchGoals();
     });
   };
@@ -169,16 +197,16 @@ export default function GoalsList() {
         ))}
       </div>
 
-      {/* Goals Grid */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${isPending ? 'opacity-70' : ''}`}>
+      {/* Goals List (Stacked) */}
+      <div className={`flex flex-col gap-4 ${isPending ? 'opacity-70' : ''}`}>
         {mounted && filteredGoals.length === 0 ? (
           <div className="col-span-1 md:col-span-2 p-6 text-center text-sm text-gray-500 bg-white rounded-xl border border-gray-200 border-dashed">
             No {activeTab.toLowerCase()} goals set yet.
           </div>
         ) : (
           filteredGoals.map((goal) => (
-            <div key={goal.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-              <div className="p-4">
+            <div key={goal.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col">
+              <div className="p-4 flex-1">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-2">
                     <div className={`p-1.5 rounded-lg text-white ${getCategoryColor(goal.category)}`}>
@@ -188,27 +216,65 @@ export default function GoalsList() {
                       {goal.category}
                     </span>
                   </div>
+                  <div className="flex gap-1">
+                    <button 
+                      onClick={() => handleComplete(goal.id)}
+                      className={`p-1.5 rounded-lg transition-colors ${goal.progress === 100 ? 'text-green-600 bg-green-50' : 'text-gray-400 hover:text-green-600 hover:bg-green-50'}`}
+                      title="Complete Goal"
+                    >
+                      <CheckCircle size={16} />
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(goal.id)}
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      title="Delete Goal"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
 
-                <h3 className="text-sm font-semibold text-gray-900 mb-1">{goal.title}</h3>
-                <p className="text-xs text-gray-500 mb-4 line-clamp-1">{goal.description || 'No description'}</p>
-
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs font-medium">
-                    <span className="text-gray-500">Progress</span>
-                    <span className="text-gray-900">{goal.progress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                    <div
-                      className={`h-1.5 rounded-full ${getCategoryColor(goal.category)}`}
-                      style={{ width: `${goal.progress}%` }}
-                    ></div>
-                  </div>
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <h3 className={`text-sm font-semibold text-gray-900 ${goal.progress === 100 ? 'line-through text-gray-400' : ''}`}>
+                    {goal.title}
+                  </h3>
                 </div>
+                
+                {editingId === goal.id ? (
+                  <div className="mb-4">
+                    <textarea
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      className="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 text-xs py-1 px-2"
+                      rows={2}
+                      autoFocus
+                    />
+                    <div className="flex justify-end gap-1 mt-1">
+                      <button onClick={() => setEditingId(null)} className="p-1 text-gray-400 hover:text-gray-600"><X size={14} /></button>
+                      <button onClick={() => handleSaveDescription(goal.id)} className="p-1 text-blue-500 hover:text-blue-700"><Save size={14} /></button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="group relative flex items-start gap-1 mb-4">
+                    <p className="text-xs text-gray-500 line-clamp-2 italic">
+                      {goal.description || 'No notes added yet...'}
+                    </p>
+                    <button 
+                      onClick={() => {
+                        setEditingId(goal.id);
+                        setEditDescription(goal.description || '');
+                      }}
+                      className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-blue-500 transition-opacity"
+                    >
+                      <Edit3 size={12} />
+                    </button>
+                  </div>
+                )}
+
               </div>
 
               {goal.targetDate && (
-                <div className="bg-gray-50/50 px-4 py-2 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-500 font-medium">
+                <div className="bg-gray-50/50 px-4 py-2 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-500 font-medium mt-auto">
                   <div className="flex items-center gap-1.5">
                     <Clock size={12} />
                     <span>Target: {format(new Date(goal.targetDate), 'MMM d, yyyy')}</span>
